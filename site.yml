@@ -1,0 +1,79 @@
+---
+- name: Deploy web servers
+  hosts: web
+  become: yes
+  tags: [deploy]
+  tasks:
+    - name: Update apt cache (Ubuntu/Debian)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install nginx (Ubuntu/Debian)
+      apt:
+        name: nginx
+        state: present
+
+    - name: Configure nginx default site to listen on 8080
+      template:
+        src: templates/nginx_default.j2
+        dest: /etc/nginx/sites-available/default
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart nginx
+
+    - name: Deploy index.html with SJSU ID
+      template:
+        src: templates/index.html.j2
+        dest: /var/www/html/index.html
+        mode: '0644'
+
+    - name: Ensure nginx is started and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Apply nginx changes immediately
+      meta: flush_handlers
+
+    - name: Verify page is served locally on each host
+      uri:
+        url: "http://127.0.0.1:8080/"
+        status_code: 200
+      register: verify_result
+      retries: 6
+      delay: 3
+      until: verify_result.status == 200
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+- name: Undeploy web servers
+  hosts: web
+  become: yes
+  tags: [undeploy]
+  tasks:
+    - name: Stop nginx
+      service:
+        name: nginx
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Remove nginx (purge)
+      apt:
+        name: nginx
+        state: absent
+        purge: yes
+      ignore_errors: yes
+
+    - name: Remove index.html
+      file:
+        path: /var/www/html/index.html
+        state: absent
+      ignore_errors: yes

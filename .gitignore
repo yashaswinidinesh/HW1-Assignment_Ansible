@@ -1,0 +1,6 @@
+*.pem
+*.retry
+__pycache__/
+.vscode/
+.idea/
+.DS_Store
