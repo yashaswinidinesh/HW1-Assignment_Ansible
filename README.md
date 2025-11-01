@@ -1,6 +1,6 @@
 # SJSU HW #1 — Ansible Web Server Deployment
 
-**Student:** Yashaswini Dinesh
+**Name:** Yashaswini Dinesh
 
 Deploy Nginx on **VM1** and **VM2** to serve `Hello World from SJSU-X` on **port 8080**.
 Includes **deploy** and **undeploy** tags.
